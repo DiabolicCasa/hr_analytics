@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Flask App{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <style type="text/tailwindcss">
+      @layer components {
+        body {
+          @apply font-['Inter',sans-serif] bg-gray-100;
+        }
+        .sidebar {
+          @apply bg-gray-800 text-white w-64 min-h-screen p-4 md:block hidden;
+        }
+        .sidebar-title {
+          @apply text-2xl font-bold mb-4;
+        }
+        .nav-item {
+          @apply block py-2 px-4 hover:bg-gray-700 hover:font-semibold hover:rounded-xl transition duration-200;
+        }
+        .main-content {
+          @apply flex-1 p-10;
+        }
+       
+      }
+    </style>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const toggleButton = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+
+        toggleButton.addEventListener('click', function () {
+          sidebar.classList.toggle('hidden');
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="flex">
+      <!-- Sidebar -->
+      <div id="sidebar" class="sidebar">
+       <div class='flex items-center justify-between'>
+        
+        <h1 class="sidebar-title">Kartika</h1>
+        <button id="sidebar-toggle" class="sidebar-toggle text-white"><i class='bx bx-x'></i></button>
+       
+       </div>
+        <nav>
+          <ul>
+            <li><a href="{{ url_for('home') }}" class="nav-item">Home</a></li>
+            <li><a href="{{ url_for('jobs') }}" class="nav-item">Jobs</a></li>
+            <li><a href="{{ url_for('calendar_view') }}" class="nav-item">Calendar</a></li>
+            <li><a href="{{ url_for('applicants') }}" class="nav-item">Applicants</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Main content -->
+      <div class="main-content">
+     
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </body>
+</html>
