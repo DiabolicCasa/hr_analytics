@@ -49,10 +49,17 @@
         <form id="scheduleForm" action="{{ url_for('schedule_interview') }}" method="post">
             <input type="hidden" id="scheduleDate" name="date">
             <input type="time" name="time" required class="block w-full mb-2 p-2 border rounded">
-            <input type="text" name="name" placeholder="Interviewee Name" required class="block w-full mb-2 p-2 border rounded">
+            <input type="text" name="name" placeholder="Interviewee Name" required class="block w-full mb-2 p-2 border rounded" disabled>
+            <select id="interviewee" name="interviewee" required class="block w-full mb-2 p-2 border rounded" onchange="updateApplicantName()">
+                <option value=''>Interviewee</option>
+                {% for applicant in applicants_list %}
+                <option value="{{ applicant._id }}" data-name="{{ applicant.name }}">{{ applicant.name }} - {{ vacancy_dict[applicant.job_id] }}</option>
+                {% endfor %}
+            </select>
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Schedule</button>
             <button type="button" onclick="hideScheduleForm()" class="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
         </form>
+        
     </div>
 </div>
 
@@ -67,76 +74,92 @@
 </div>
 
 <script>
-function showScheduleForm(date) {
-    document.getElementById('scheduleDate').value = date;
-    document.getElementById('scheduleModal').classList.remove('hidden');
-}
-
-function hideScheduleForm() {
-    document.getElementById('scheduleModal').classList.add('hidden');
-}
-
-function showInterviewsModal() {
-    document.getElementById('interviewsModal').classList.remove('hidden');
-    document.getElementById('interviewDate').value = new Date().toISOString().split('T')[0];
-    loadInterviewsForDate(document.getElementById('interviewDate').value);
-}
-
-function hideInterviewsModal() {
-    document.getElementById('interviewsModal').classList.add('hidden');
-}
-
-function loadInterviews() {
-    const cells = document.querySelectorAll('[id^="interviews-"]');
-    cells.forEach(cell => {
-        const [_, year, month, day] = cell.id.split('-');
-        const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectElement = document.getElementById('interviewee');
+        selectElement.addEventListener('change', updateApplicantName);
+    });
+    
+    function updateApplicantName() {
+        const selectElement = document.getElementById('interviewee');
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const applicantName = selectedOption.getAttribute('data-name');
         
+        const nameInput = document.getElementById('scheduleForm').querySelector('input[name="name"]');
+        if (nameInput) {
+            nameInput.value = applicantName;
+        }
+    }
+    
+    function showScheduleForm(date) {
+        document.getElementById('scheduleDate').value = date;
+        document.getElementById('scheduleModal').classList.remove('hidden');
+    }
+
+    function hideScheduleForm() {
+        document.getElementById('scheduleModal').classList.add('hidden');
+    }
+
+    function showInterviewsModal() {
+        document.getElementById('interviewsModal').classList.remove('hidden');
+        document.getElementById('interviewDate').value = new Date().toISOString().split('T')[0];
+        loadInterviewsForDate(document.getElementById('interviewDate').value);
+    }
+
+    function hideInterviewsModal() {
+        document.getElementById('interviewsModal').classList.add('hidden');
+    }
+
+    function loadInterviews() {
+        const cells = document.querySelectorAll('[id^="interviews-"]');
+        cells.forEach(cell => {
+            const [_, year, month, day] = cell.id.split('-');
+            const date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            
+            fetch(`/get_interviews?date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    cell.innerHTML = data.map(interview => 
+                        `<div class="bg-blue-100 p-1 rounded mb-1">${interview.time} - ${interview.name}</div>`
+                    ).join('');
+                });
+        });
+    }
+
+    function loadInterviewsForDate(date) {
         fetch(`/get_interviews?date=${date}`)
             .then(response => response.json())
             .then(data => {
-                cell.innerHTML = data.map(interview => 
-                    `<div class="bg-blue-100 p-1 rounded mb-1">${interview.time} - ${interview.name}</div>`
-                ).join('');
-            });
-    });
-}
-
-function loadInterviewsForDate(date) {
-    fetch(`/get_interviews?date=${date}`)
-        .then(response => response.json())
-        .then(data => {
-            const interviewsList = document.getElementById('interviewsList');
-            interviewsList.innerHTML = data.map(interview => `
-                <div class="bg-blue-100 p-2 rounded mb-2">
-                    <p>${interview.time} - ${interview.name}</p>
-                    <button onclick="updateInterview('${interview.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 mr-2">Update</button>
-                    <button onclick="deleteInterview('${interview.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Delete</button>
-                </div>
-            `).join('');
-        });
-}
-
-function updateInterview(id) {
-    // Implement update functionality
-    console.log('Update interview', id);
-}
-
-function deleteInterview(id) {
-    if (confirm('Are you sure you want to delete this interview?')) {
-        fetch(`/delete_interview/${id}`, { method: 'DELETE' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadInterviewsForDate(document.getElementById('interviewDate').value);
-                    loadInterviews();
-                } else {
-                    alert('Failed to delete interview');
-                }
+                const interviewsList = document.getElementById('interviewsList');
+                interviewsList.innerHTML = data.map(interview => `
+                    <div class="bg-blue-100 p-2 rounded mb-2">
+                        <p>${interview.time} - ${interview.name}</p>
+                        <button onclick="updateInterview('${interview.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 mr-2">Update</button>
+                        <button onclick="deleteInterview('${interview.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">Delete</button>
+                    </div>
+                `).join('');
             });
     }
-}
 
-document.addEventListener('DOMContentLoaded', loadInterviews);
+    function updateInterview(id) {
+        // Implement update functionality
+        console.log('Update interview', id);
+    }
+
+    function deleteInterview(id) {
+        if (confirm('Are you sure you want to delete this interview?')) {
+            fetch(`/delete_interview/${id}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadInterviewsForDate(document.getElementById('interviewDate').value);
+                        loadInterviews();
+                    } else {
+                        alert('Failed to delete interview');
+                    }
+                });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadInterviews);
 </script>
 {% endblock %}

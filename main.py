@@ -28,12 +28,15 @@ def home():
 
 @app.route('/applicants')
 def applicants():
-    applicants_list = list(applications_collection.find()) 
+    applicants_list = list(applications_collection.find().sort('date', -1))
     vacancies = list(jobs_collection.find({'open': True}))
     vacancy_dict = {vacancy['_id']: vacancy['title'] for vacancy in vacancies}
+    
+    for applicant in applicants_list:
+        applicant['date'] = applicant['date'].strftime('%Y-%m-%d')
 
-    return render_template('applicants.html',vacancies=vacancies,applicants_list=applicants_list,vacancy_dict=vacancy_dict)
-
+    return render_template('applicants_v.html', vacancies=vacancies, applicants_list=applicants_list, vacancy_dict=vacancy_dict)
+    
 # Configure upload folder
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -179,6 +182,10 @@ def contact():
 
 @app.route('/calendar')
 def calendar_view():
+    applicants_list = list(applications_collection.find())
+    vacancies = list(jobs_collection.find({'open':True}))
+    vacancy_dict = {vacancy['_id']: vacancy['title'] for vacancy in vacancies}
+    
     year = int(request.args.get('year', datetime.now().year))
     month = int(request.args.get('month', datetime.now().month))
     
@@ -195,7 +202,7 @@ def calendar_view():
     }))
     
     return render_template('calendar.html', year=year, month=month, calendar=cal, 
-                           interviews=scheduled_interviews, 
+                           interviews=scheduled_interviews, applicants_list = applicants_list,vacancy_dict=vacancy_dict,
                            month_name=calendar.month_name[month],
                            today=datetime.now())
 
@@ -203,13 +210,22 @@ def calendar_view():
 def schedule_interview():
     date = request.form['date']
     time = request.form['time']
-    name = request.form['name']
+    interviewee_id = request.form['interviewee']
+    print(request.form)
+
+    # Fetch interviewee details based on ID
+    interviewee = applications_collection.find_one({'_id': ObjectId(interviewee_id)})
+    applicant_name = interviewee['name'] if interviewee else 'Unknown Applicant'
+    print(interviewee)
+    
     
     interview_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-    
+    # return redirect(url_for('calendar_view'))
+
     interviews.insert_one({
         'date': interview_datetime,
-        'name': name
+        'name': applicant_name,
+        'interviewee' : ObjectId(interviewee_id)
     })
     
     return redirect(url_for('calendar_view'))
