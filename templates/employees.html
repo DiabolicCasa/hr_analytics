@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Management{% endblock %}
+
+{% block content %}
+<div class="container w-5/6 mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4">Employee Management</h1>
+    
+    <!-- Add Employee Button -->
+    <button onclick="openModal()" 
+            class="bg-green-500 text-white px-4 py-2 rounded mb-4 hover:bg-green-600">
+        Add Employee
+    </button>
+    
+    <!-- Employee List -->
+    <table class="w-full bg-white border rounded-md mb-4">
+        <thead>
+            <tr class="text-gray-600 uppercase border text-sm leading-normal">
+                <th class="py-3 px-6 text-left">Name</th>
+                <th class="py-3 px-6 text-left">Position</th>
+                <th class="py-3 px-6 text-center">Department</th>
+                <th class="py-3 px-6 text-center">Date of Joining</th>
+                <th class="py-3 px-6 text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="text-gray-900 text-normal font-normal">
+            {% for employee in employees %}
+            <tr class="border-b border-gray-200 rounded hover:bg-gray-100">
+                <td class="py-3 px-6 text-left whitespace-nowrap">
+                    <div class="flex items-center">
+                        <span class="font-medium">{{ employee.name }}</span>
+                    </div>
+                </td>
+                <td class="py-3 px-6 text-left">
+                    <span>{{ employee.position }}</span>
+                </td>
+                <td class="py-3 px-6 text-center">
+                    <span>{{ employee.department }}</span>
+                </td>
+                <td class="py-3 px-6 text-center">
+                    <span>{{ employee.date_of_joining.strftime('%Y-%m-%d') }}</span>
+                </td>
+                <td class="py-3 px-6 text-center">
+                    <div class="flex item-center justify-center">
+                        <button onclick="openModal('{{ employee._id }}', '{{ employee.name }}', '{{ employee.position }}', '{{ employee.department }}', '{{ employee.date_of_joining.strftime('%Y-%m-%d') }}')" 
+                                class="w-4 mr-2 transform hover:text-purple-500 hover:scale-110">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <button onclick="deleteEmployee('{{ employee._id }}')"
+                                class="w-4 mr-2 transform hover:text-red-500 hover:scale-110">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div id="employeeModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" style="display: none;">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modalTitle">Add/Edit Employee</h3>
+                <form id="employeeForm" class="mt-2 px-7 py-3">
+                    <input type="hidden" id="employeeId" name="id">
+                    <input type="text" id="name" name="name" placeholder="Name" 
+                           class="w-full px-3 py-2 border rounded-md mb-4" required>
+                    <input type="text" id="position" name="position" placeholder="Position" 
+                           class="w-full px-3 py-2 border rounded-md mb-4" required>
+                    <input type="text" id="department" name="department" placeholder="Department" 
+                           class="w-full px-3 py-2 border rounded-md mb-4" required>
+                    <input type="date" id="dateOfJoining" name="dateOfJoining" 
+                           class="w-full px-3 py-2 border rounded-md mb-4" required>
+                    <button type="submit" 
+                            class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                        Save
+                    </button>
+                </form>
+                <button onclick="closeModal()" 
+                        class="mt-2 bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(id = '', name = '', position = '', department = '', dateOfJoining = '') {
+    document.getElementById('employeeId').value = id;
+    document.getElementById('name').value = name;
+    document.getElementById('position').value = position;
+    document.getElementById('department').value = department;
+    document.getElementById('dateOfJoining').value = dateOfJoining;
+    document.getElementById('modalTitle').innerText = id ? 'Edit Employee' : 'Add Employee';
+    document.getElementById('employeeModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('employeeModal').style.display = 'none';
+}
+
+document.getElementById('employeeForm').onsubmit = function(e) {
+    e.preventDefault();
+    const id = document.getElementById('employeeId').value;
+    const name = document.getElementById('name').value;
+    const position = document.getElementById('position').value;
+    const department = document.getElementById('department').value;
+    const dateOfJoining = document.getElementById('dateOfJoining').value;
+    
+    const url = id ? `/employees/update/${id}` : '/employees/add';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `name=${encodeURIComponent(name)}&position=${encodeURIComponent(position)}&department=${encodeURIComponent(department)}&dateOfJoining=${encodeURIComponent(dateOfJoining)}`
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        }
+    });
+};
+
+function deleteEmployee(id) {
+    if (confirm('Are you sure you want to delete this employee?')) {
+        fetch(`/employees/delete/${id}`, {
+            method: 'POST',
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

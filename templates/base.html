@@ -56,10 +56,12 @@
       <nav id="navbar-menu" class=" md:flex md:items-center">
         <ul class="md:flex md:space-x-4">
           <li><a href="{{ url_for('home') }}" class="nav-item">Home</a></li>
+          <li><a href="{{ url_for('todo_index') }}" class="nav-item">Todos</a></li>
           <li><a href="{{ url_for('jobs') }}" class="nav-item">Jobs</a></li>
-          <li><a href="{{ url_for('calendar_view') }}" class="nav-item">Calendar</a></li>
           <li><a href="{{ url_for('applicants') }}" class="nav-item">Applicants</a></li>
-        </ul>
+          <li><a href="{{ url_for('employee_list') }}" class="nav-item">Employee</a></li>
+          <li><a href="{{ url_for('calendar_view') }}" class="nav-item">Calendar</a></li>
+            </ul>
       </nav>
     </div>
 

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Todo List{% endblock %}
+
+{% block content %}
+<div class="container w-5/6 mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4">Todo List</h1>
+    
+    <!-- Add Todo Form -->
+    <form action="{{ url_for('add_todo') }}" method="POST" class="mb-4 mx-auto p-4 w-5/6">
+        <input type="text" name="title" placeholder="Enter a new todo" 
+               class="border rounded px-2 w-5/6 p-2  mr-2">
+        <button type="submit" 
+                class="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
+            Add
+        </button>
+    </form>
+    
+    <!-- Todo List -->
+    <ul class="space-y-2 w-5/6 mx-auto">
+        {% for todo in todos %}
+            <li class="flex items-center justify-between bg-white p-4 rounded">
+                <span>{{ todo.title }}</span>
+                <div>
+                    <button onclick="openModal('{{ todo._id }}', '{{ todo.title }}')" 
+                            class="text-blue-500 hover:text-blue-700 mr-2">Edit</button>
+                    <a href="{{ url_for('delete_todo', id=todo._id) }}" 
+                       class="text-red-500 hover:text-red-700">Delete</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<!-- Modal -->
+<div id="updateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" style="display: none;">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Update Todo</h3>
+            <form id="updateForm" class="mt-2 px-7 py-3">
+                <input type="hidden" id="todoId" name="id">
+                <input type="text" id="todoTitle" name="title" 
+                       class="w-full px-3 py-2 border rounded-md" required>
+                <button type="submit" 
+                        class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                    Update
+                </button>
+            </form>
+            <button onclick="closeModal()" 
+                    class="mt-2 bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openModal(id, title) {
+    document.getElementById('todoId').value = id;
+    document.getElementById('todoTitle').value = title;
+    document.getElementById('updateModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('updateModal').style.display = 'none';
+}
+
+document.getElementById('updateForm').onsubmit = function(e) {
+    e.preventDefault();
+    const id = document.getElementById('todoId').value;
+    const title = document.getElementById('todoTitle').value;
+    fetch(`/update/${id}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `title=${encodeURIComponent(title)}`
+    }).then(response => {
+        if (response.ok) {
+            window.location.reload();
+        }
+    });
+};
+</script>
+{% endblock %}

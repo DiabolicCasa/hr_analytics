@@ -20,6 +20,8 @@ db = client['HR']
 jobs_collection = db['jobs']
 interviews = db['interviews']
 applications_collection = db['applicants']
+todo_collection = db['todo']
+employee_collection = db['employee']
 
 
 @app.route('/')
@@ -256,6 +258,65 @@ def delete_interview(interview_id):
     else:
         return jsonify({'success': False}), 404
 
+
+
+@app.route('/todo')
+def todo_index():
+    all_todos = todo_collection.find()
+    return render_template('todo.html', todos=all_todos)
+
+@app.route('/add', methods=['POST'])
+def add_todo():
+    title = request.form.get('title')
+    todo_collection.insert_one({'title': title})
+    return redirect(url_for('todo_index'))
+
+@app.route('/update/<id>', methods=['POST'])
+def update_todo(id):
+    title = request.form.get('title')
+    todo_collection.update_one({'_id': ObjectId(id)}, {'$set': {'title': title}})
+    return jsonify(success=True)
+
+
+@app.route('/delete/<id>')
+def delete_todo(id):
+    todo_collection.delete_one({'_id': ObjectId(id)})
+    return redirect(url_for('todo_index'))
+
+
+@app.route('/employees')
+def employee_list():
+    all_employees = employee_collection.find()
+    return render_template('employees.html', employees=all_employees)
+
+@app.route('/employees/add', methods=['POST'])
+def add_employee():
+    employee = {
+        'name': request.form.get('name'),
+        'position': request.form.get('position'),
+        'department': request.form.get('department'),
+        'date_of_joining': datetime.strptime(request.form.get('dateOfJoining'), '%Y-%m-%d')
+    }
+    employee_collection.insert_one(employee)
+    return jsonify(success=True)
+
+@app.route('/employees/update/<id>', methods=['POST'])
+def update_employee(id):
+    employee_collection.update_one(
+        {'_id': ObjectId(id)},
+        {'$set': {
+            'name': request.form.get('name'),
+            'position': request.form.get('position'),
+            'department': request.form.get('department'),
+            'date_of_joining': datetime.strptime(request.form.get('dateOfJoining'), '%Y-%m-%d')
+        }}
+    )
+    return jsonify(success=True)
+
+@app.route('/employees/delete/<id>', methods=['POST'])
+def delete_employee(id):
+    employee_collection.delete_one({'_id': ObjectId(id)})
+    return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
